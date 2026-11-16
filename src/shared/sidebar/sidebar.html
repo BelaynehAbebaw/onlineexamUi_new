@@ -1,0 +1,43 @@
+
+<div class="sidebar" [class.open]="isOpen">
+
+  <div class="sidebar-menu">
+
+    <a routerLink="/dashboard"
+       routerLinkActive="active"
+       (click)="navigate.emit()">
+      <i class="bi bi-speedometer2"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <a routerLink="/users"
+       routerLinkActive="active"
+       (click)="navigate.emit()">
+      <i class="bi bi-people"></i>
+      <span>Users</span>
+    </a>
+
+    <a routerLink="/subjects"
+       routerLinkActive="active"
+       (click)="navigate.emit()">
+      <i class="bi bi-book"></i>
+      <span>Subjects</span>
+    </a>
+
+    <a routerLink="/questions"
+       routerLinkActive="active"
+       (click)="navigate.emit()">
+      <i class="bi bi-question-circle"></i>
+      <span>Questions</span>
+    </a>
+
+    <a routerLink="/results"
+       routerLinkActive="active"
+       (click)="navigate.emit()">
+      <i class="bi bi-bar-chart"></i>
+      <span>Results</span>
+    </a>
+
+  </div>
+
+</div>

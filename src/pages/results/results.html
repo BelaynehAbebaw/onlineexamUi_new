@@ -1,0 +1,378 @@
+
+<div class="container-fluid py-4">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+
+    <div>
+      <h2 class="fw-bold mb-1">
+        <i class="bi bi-bar-chart-fill me-2"></i>
+        Examination Results
+      </h2>
+      <p class="text-secondary mb-0">
+        View, manage and analyze student examination performance.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-success"
+      (click)="exportResults()"
+      [disabled]="filteredResults.length === 0">
+
+      <i class="bi bi-file-earmark-excel me-2"></i>
+      Export CSV
+
+    </button>
+
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    {{ successMessage }}
+    <button class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ errorMessage }}
+    <button class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="result-summary-icon bg-primary-subtle text-primary">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div class="ms-3">
+            <p class="text-secondary mb-1">Total Results</p>
+            <h4 class="fw-bold mb-0">{{ results.length }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="result-summary-icon bg-success-subtle text-success">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <div class="ms-3">
+            <p class="text-secondary mb-1">Passed</p>
+            <h4 class="fw-bold mb-0">
+              {{ results.filter(isPassed.bind(this)).length }}
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center">
+          <div class="result-summary-icon bg-danger-subtle text-danger">
+            <i class="bi bi-x-circle-fill"></i>
+          </div>
+          <div class="ms-3">
+            <p class="text-secondary mb-1">Failed</p>
+            <h4 class="fw-bold mb-0">
+              {{ results.filter(item => !isPassed(item)).length }}
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Results Table -->
+  <div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-white py-3">
+
+      <div class="row g-3 align-items-center">
+
+        <div class="col-md-4">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-list-ul me-2"></i>
+            Student Results
+          </h5>
+        </div>
+
+        <div class="col-md-5">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search student or subject..."
+              [(ngModel)]="searchText"
+              (ngModelChange)="filterResults()">
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <select
+            class="form-select"
+            [(ngModel)]="selectedSubject"
+            (ngModelChange)="filterResults()">
+
+            <option value="">All Subjects</option>
+
+            <option
+              *ngFor="let subject of subjects"
+              [value]="subject">
+              {{ subject }}
+            </option>
+
+          </select>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="text-secondary mt-2">Loading examination results...</p>
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!loading" class="table-responsive">
+
+      <table class="table table-hover align-middle mb-0">
+
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Subject</th>
+            <th>Score</th>
+            <th>Percentage</th>
+            <th>Exam Date</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr *ngFor="let item of filteredResults; let i = index">
+
+            <td>{{ i + 1 }}</td>
+
+            <td>
+              <div class="fw-semibold">
+                {{ getStudentName(item) }}
+              </div>
+              <small class="text-secondary">
+                {{ item.user?.email }}
+              </small>
+            </td>
+
+            <td>{{ item.subject }}</td>
+
+            <td>
+              <strong>{{ item.score }}</strong>
+              / {{ item.totalQuestions }}
+            </td>
+
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress result-progress">
+                  <div
+                    class="progress-bar"
+                    [class.bg-success]="isPassed(item)"
+                    [class.bg-danger]="!isPassed(item)"
+                    [style.width.%]="getPercentage(item)">
+                  </div>
+                </div>
+                <strong>{{ getPercentage(item) }}%</strong>
+              </div>
+            </td>
+
+            <td>
+              {{ item.examDate ? (item.examDate | date:'mediumDate') : '-' }}
+            </td>
+
+            <td>
+              <span
+                class="badge"
+                [class.bg-success]="isPassed(item)"
+                [class.bg-danger]="!isPassed(item)">
+
+                {{ isPassed(item) ? 'PASS' : 'FAIL' }}
+
+              </span>
+            </td>
+
+            <td class="text-center">
+
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary me-2"
+                title="Edit result"
+                (click)="editResult(item)">
+
+                <i class="bi bi-pencil-square"></i>
+
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                title="Delete result"
+                (click)="deleteResult(item)">
+
+                <i class="bi bi-trash"></i>
+
+              </button>
+
+            </td>
+
+          </tr>
+
+          <tr *ngIf="filteredResults.length === 0">
+            <td colspan="8" class="text-center py-5">
+
+              <i class="bi bi-clipboard-x fs-1 text-secondary"></i>
+
+              <h5 class="mt-3">No results found</h5>
+
+              <p class="text-secondary mb-0">
+                No examination results match your search.
+              </p>
+
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- Edit Result Modal -->
+<div
+  *ngIf="showForm"
+  class="custom-modal-backdrop">
+
+  <div class="custom-modal">
+
+    <div class="modal-header border-bottom">
+
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-pencil-square me-2"></i>
+        Edit Examination Result
+      </h5>
+
+      <button
+        type="button"
+        class="btn-close"
+        (click)="closeForm()">
+      </button>
+
+    </div>
+
+    <form (ngSubmit)="saveResult()" #resultForm="ngForm">
+
+      <div class="modal-body">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Student</label>
+          <input
+            type="text"
+            class="form-control"
+            [value]="getStudentName(result)"
+            disabled>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Subject *</label>
+          <input
+            type="text"
+            class="form-control"
+            name="subject"
+            [(ngModel)]="result.subject"
+            required>
+        </div>
+
+        <div class="row">
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Score *</label>
+            <input
+              type="number"
+              class="form-control"
+              name="score"
+              [(ngModel)]="result.score"
+              min="0"
+              [max]="result.totalQuestions"
+              required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-semibold">Total Questions *</label>
+            <input
+              type="number"
+              class="form-control"
+              name="totalQuestions"
+              [(ngModel)]="result.totalQuestions"
+              min="1"
+              required>
+          </div>
+
+        </div>
+
+        <div class="alert alert-info mb-0">
+          <strong>New Percentage:</strong>
+          {{ getPercentage(result) }}%
+        </div>
+
+      </div>
+
+      <div class="modal-footer border-top">
+
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeForm()">
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="resultForm.invalid || saving">
+
+          <span
+            *ngIf="saving"
+            class="spinner-border spinner-border-sm me-2">
+          </span>
+
+          {{ saving ? 'Updating...' : 'Update Result' }}
+
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
